@@ -11,6 +11,37 @@ def encontrar_arquivos_txt(pasta_executavel):
                 arquivos_txt.append(os.path.join(pasta_executavel, item))
     return arquivos_txt
 
+
+def processar_arquivo(caminho_arquivo):
+    """Processa o arquivo substituindo o primeiro valor pelo número da linha"""
+    linhas_tratadas = []
+    
+    with open(caminho_arquivo, 'r', encoding='utf-8') as f:
+        for num_linha, linha in enumerate(f, 1):
+            linha = linha.strip()
+            if not linha:
+                continue
+                
+            valores = linha.split(',')
+            if len(valores) < 2:
+                print(f"[AVISO] Linha {num_linha} com formato inválido: {linha}")
+                continue
+                
+            primeiro_valor = valores[0]
+            
+            # Verifica se o primeiro valor NÃO é um número inteiro
+            if not primeiro_valor.isdigit():
+                # Concatena o primeiro valor ao último (com espaço)
+                valores[-1] = f"{valores[-1]} {primeiro_valor}"
+            
+            # Substitui o primeiro valor pelo número da linha (em todos os casos)
+            valores[0] = str(num_linha)
+            linhas_tratadas.append(','.join(valores))
+    
+    return linhas_tratadas
+
+
+''' de V1
 def processar_arquivo(caminho_arquivo):
     """Processa o arquivo substituindo o primeiro valor pelo número da linha"""
     linhas_tratadas = []
@@ -30,6 +61,10 @@ def processar_arquivo(caminho_arquivo):
             linhas_tratadas.append(','.join(valores))
     
     return linhas_tratadas
+
+'''
+
+
 
 def salvar_arquivos_tratados(caminho_original, linhas_tratadas):
     """Salva duas versões do arquivo tratado: _CAD e _QGIS"""
