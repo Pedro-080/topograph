@@ -11,13 +11,31 @@ def encontrar_arquivos_txt(pasta_executavel):
                 arquivos_txt.append(os.path.join(pasta_executavel, item))
     return arquivos_txt
 
-
 def processar_arquivo(caminho_arquivo):
-    """Processa o arquivo substituindo o primeiro valor pelo número da linha"""
+    """Processa o arquivo aplicando ajuste de Z se necessário"""
     linhas_tratadas = []
+    ajuste_z = 0.0
+    primeira_linha_especial = False
     
     with open(caminho_arquivo, 'r', encoding='utf-8') as f:
-        for num_linha, linha in enumerate(f, 1):
+        # Verifica a primeira linha para ajuste de Z
+        primeira_linha = f.readline().strip()
+        
+        if primeira_linha.startswith('Z+=') or primeira_linha.startswith('Z-='):
+            primeira_linha_especial = True
+            try:
+                ajuste_z = float(primeira_linha[3:])
+                if primeira_linha.startswith('Z-='):
+                    ajuste_z = -ajuste_z
+            except ValueError:
+                print(f"[AVISO] Valor de ajuste Z inválido: {primeira_linha}")
+        
+        # Se a primeira linha era especial, continuamos a leitura
+        # Se não era, precisamos processar essa linha
+        if not primeira_linha_especial:
+            f.seek(0)  # Volta ao início do arquivo
+        
+        for num_linha, linha in enumerate(f, 1 if primeira_linha_especial else 1):
             linha = linha.strip()
             if not linha:
                 continue
@@ -34,37 +52,20 @@ def processar_arquivo(caminho_arquivo):
                 # Concatena o primeiro valor ao último (com espaço)
                 valores[-1] = f"{valores[-1]} {primeiro_valor}"
             
+            # Aplica ajuste Z se houver (assumindo que Z é o 4º valor, índice 3)
+            if len(valores) >= 4 and ajuste_z != 0.0:
+                try:
+                    z = float(valores[3])
+                    z_ajustado = z + ajuste_z
+                    valores[3] = f"{z_ajustado:.3f}"  # Formata para 3 casas decimais
+                except ValueError:
+                    print(f"[AVISO] Valor Z inválido na linha {num_linha}: {valores[3]}")
+            
             # Substitui o primeiro valor pelo número da linha (em todos os casos)
             valores[0] = str(num_linha)
             linhas_tratadas.append(','.join(valores))
     
     return linhas_tratadas
-
-
-''' de V1
-def processar_arquivo(caminho_arquivo):
-    """Processa o arquivo substituindo o primeiro valor pelo número da linha"""
-    linhas_tratadas = []
-    
-    with open(caminho_arquivo, 'r', encoding='utf-8') as f:
-        for num_linha, linha in enumerate(f, 1):
-            linha = linha.strip()
-            if not linha:
-                continue
-                
-            valores = linha.split(',')
-            if len(valores) < 2:
-                print(f"[AVISO] Linha {num_linha} com formato inválido: {linha}")
-                continue
-                
-            valores[0] = str(num_linha)
-            linhas_tratadas.append(','.join(valores))
-    
-    return linhas_tratadas
-
-'''
-
-
 
 def salvar_arquivos_tratados(caminho_original, linhas_tratadas):
     """Salva duas versões do arquivo tratado: _CAD e _QGIS"""
